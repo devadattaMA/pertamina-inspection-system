@@ -37,6 +37,25 @@ export type InspectionRecord = {
   source: "SAP";
 };
 
+/**
+ * Routine corrosion monitoring entry (US-08): coupon weights and inhibitor
+ * injection. Weights are stored in grams and injection in litres / L per day.
+ */
+export type MonitoringRecord = {
+  id: string;
+  assetId: string;
+  date: string; // YYYY-MM-DD
+  couponId: string;
+  couponInitialG: number;
+  couponFinalG: number;
+  exposureDays: number;
+  inhibitor: string;
+  injectedL: number; // inhibitor volume injected
+  injectionRateLpd: number; // measured injection rate, L/day
+  notes: string;
+  source: "Form" | "Excel (sample)";
+};
+
 /** Raw payloads as returned by the (mock) source systems. */
 export type RawProduction = {
   asset_tag: string;
