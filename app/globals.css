@@ -29,3 +29,20 @@ tr.clickable{cursor:pointer}tr.clickable:hover td{background:#fafcfe}tr.row-sele
 @media(max-width:760px){.cond-cards{grid-template-columns:repeat(2,1fr)}.detail-grid{grid-template-columns:1fr}}
 /* Condition colours match the Overview donut: green / amber / red / dark red / grey */
 .status-pill.cond-pill.healthy{background:#eaf7f1;color:#248a68}.status-pill.cond-pill.monitoring{background:#fff5e6;color:#b7812d}.status-pill.cond-pill.attention{background:#fff0ef;color:#c65e59}.status-pill.cond-pill.critical{background:#fbe1df;color:#a63a35}.status-pill.cond-pill.no-data{background:#f2f5f8;color:#7a8a9c}
+/* --- Corrosion monitoring (form, units, log actions) --- */
+.form-panel{margin-bottom:15px}.form-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px 14px;margin-top:16px}
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}.field label{font-size:9px;font-weight:700;letter-spacing:.04em;color:#6b7c90}.field label b{color:#d65b5b}
+.field input,.field select{height:35px;width:100%;min-width:0;border:1px solid #dfe5ec;border-radius:7px;background:#fff;padding:0 10px;font-size:11px;color:#33475d;outline:0;transition:.15s}
+.field input:focus,.field select:focus{border-color:#2f7fcb;box-shadow:0 0 0 3px #2f7fcb1c}.field input::placeholder{color:#b3bdc8}
+.field.has-error input,.field.has-error select{border-color:#d65b5b;background:#fffafa}.field.has-error input:focus,.field.has-error select:focus{box-shadow:0 0 0 3px #d65b5b1f}
+.field-error{font-size:9px;color:#c65e59;line-height:1.4}.field-hint{font-size:8px;color:#a0aab6}
+.input-unit{display:flex;gap:6px}.input-unit input{flex:1}.input-unit select{width:auto;flex:none;padding:0 6px;color:#5d6f83;background:#f6f8fb}.unit-static{display:grid;place-items:center;min-width:50px;padding:0 8px;border:1px solid #e9edf2;border-radius:7px;background:#f6f8fb;font-size:10px;color:#7a8a9c}
+.form-preview{grid-column:span 2;display:flex;flex-direction:column;gap:6px;padding:10px 13px;border:1px dashed #cfdcec;border-radius:9px;background:#f7fbff;justify-content:center}.form-preview>span{font-size:8px;letter-spacing:.1em;font-weight:700;color:#7b93ad}
+.form-preview div{display:grid;grid-template-columns:repeat(3,auto);gap:2px 14px;align-items:baseline;justify-content:start}.form-preview b{font:700 13px Manrope,sans-serif;color:#2a3d52;font-variant-numeric:tabular-nums}.form-preview small{display:none}
+.form-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:16px;padding-top:14px;border-top:1px solid #f0f2f5}.form-panel .sync-error{margin-top:14px}
+.stat-strip strong.up-bad{color:#c65e59}.tag-new{background:#e8f3ff;color:#2b6fb3}
+.row-actions{text-align:right;white-space:nowrap}.mini-button{height:26px;border:1px solid #e3e8ee;background:#fff;border-radius:5px;padding:0 8px;font-size:9px;font-weight:600;color:#667990;display:inline-flex;align-items:center;gap:4px;margin-left:4px}.mini-button:hover{background:#f5f8fb}.mini-button.danger{background:#fff0ef;border-color:#f3cfcc;color:#c65e59}.mini-button.danger:hover{background:#ffe5e3}
+.row-more:focus-visible,.mini-button:focus-visible,.button:focus-visible,.cond-card:focus-visible,.asset-card:focus-visible{outline:2px solid #2f7fcb;outline-offset:2px}
+@media(max-width:1100px){.form-grid{grid-template-columns:repeat(2,1fr)}.form-preview{grid-column:span 2}}
+@media(max-width:760px){.form-grid{grid-template-columns:1fr}.form-preview{grid-column:auto}.form-preview div{grid-template-columns:repeat(2,auto)}.form-actions .button{flex:1;justify-content:center}}
+.form-preview div{display:flex;flex-wrap:wrap;gap:8px 24px}.form-preview p{margin:0;display:flex;flex-direction:column;gap:2px}.form-preview small{display:block;font-size:8px;color:#8b9aab}
