@@ -11,6 +11,8 @@ import {
 import ProductionView from "./components/ProductionView";
 import InspectionView from "./components/InspectionView";
 import AssetConditionView from "./components/AssetConditionView";
+import InspectionImport from "./components/InspectionImport";
+import { ASSETS } from "./lib/assets";
 import MonitoringView from "./components/MonitoringView";
 
 type Asset = { id: string; name: string; area: string; department: string; thickness: string; pressure: string; status: string; date: string; };
@@ -92,8 +94,7 @@ export default function Home() {
 
             <div className="bottom-grid"><section className="panel source-panel"><div className="panel-heading"><div><div className="panel-kicker">CONNECTED SOURCES</div><h2>Data source status</h2><p>Integration health by source system</p></div><span className="source-count">4 SOURCES</span></div><div className="source-list"><Source icon={<Database size={17}/>} name="SAP" detail="Surface facility inspection" status="Connected" tone="green"/><Source icon={<Waves size={17}/>} name="Pipeline database" detail="Pipeline inspection records" status="Connected" tone="green"/><Source icon={<FileSpreadsheet size={17}/>} name="Excel workbooks" detail="Corrosion monitoring" status="Manual import" tone="amber"/><Source icon={<Gauge size={17}/>} name="Direct Viewer" detail="Production parameters" status="Pending" tone="slate"/></div></section><section className="panel attention-panel"><div className="panel-heading"><div><div className="panel-kicker">NEEDS REVIEW</div><h2>Priority follow-ups</h2><p>Items that may require your attention</p></div><span className="attention-number">03</span></div><div className="followup-list"><Followup color="red" title="Critical wall thickness reading" detail="Attaka Offshore Flowline · PHM-PL-008" time="2 hours ago"/><Followup color="amber" title="Inspection record awaiting review" detail="Handil Export Line · PHM-PL-001" time="Yesterday"/><Followup color="blue" title="Production data not synchronized" detail="Direct Viewer · 4 assets affected" time="12 Nov 2026"/></div></section></div>
           </> : active === "Production data" ? <ProductionView department={department} period={period} notify={notify}/>
-          : active === "Inspection records" ? <InspectionView department={department} period={period} notify={notify}/>
-          : active === "Corrosion monitoring" ? <MonitoringView department={department} notify={notify}/>
+          : active === "Inspection records" ? (department === "Pipeline" ? <InspectionImport knownAssetIds={ASSETS.map(a => a.id)} onImported={n => notify(`${n} pipeline inspection records imported (demo, not saved).`)}/> : <InspectionView department={department} period={period} notify={notify}/>)          : active === "Corrosion monitoring" ? <MonitoringView department={department} notify={notify}/>
           : active === "Asset condition" ? <AssetConditionView department={department} period={period} notify={notify} initialCondition={conditionFilter} onBack={() => setActive("Overview")}/>
           : <section className="panel placeholder-panel"><div className="placeholder-icon"><Command size={25}/></div><div className="panel-kicker">{active.toUpperCase()}</div><h2>{active} workspace</h2><p>This section is part of the frontend prototype. The dashboard currently uses illustrative sample data; workflows and backend integrations will be developed in later iterations.</p><button className="button button-primary" onClick={() => setActive("Overview")}>Back to overview</button></section>}
           <footer className="footer"><span>PHM INTELLIGENCE <span className="footer-sep">/</span> INTERNAL WORKSPACE</span><span>Frontend prototype · Sample data only</span><span>v0.1.0</span></footer>
