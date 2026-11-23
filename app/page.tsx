@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Activity, AlertTriangle, ArrowDownRight, ArrowUpRight, Bell, ChevronDown,
   ChevronLeft, ChevronRight, CircleHelp, Clock3, Command, Download, FileSpreadsheet,
@@ -16,13 +16,7 @@ import { ASSETS } from "./lib/assets";
 import MonitoringView from "./components/MonitoringView";
 
 type Asset = { id: string; name: string; area: string; department: string; thickness: string; pressure: string; status: string; date: string; };
-const assets: Asset[] = [
-  { id: "PHM-PL-001", name: "Handil–Bekapai Export Line", area: "Handil", department: "Pipeline", thickness: "8.42 mm", pressure: "42.8 bar", status: "Attention", date: "13 Nov 2026" },
-  { id: "PHM-SF-014", name: "Central Processing Facility", area: "Bekapai", department: "Surface Facility", thickness: "11.20 mm", pressure: "18.4 bar", status: "Healthy", date: "12 Nov 2026" },
-  { id: "PHM-PL-008", name: "Attaka Offshore Flowline", area: "Attaka", department: "Pipeline", thickness: "6.18 mm", pressure: "36.2 bar", status: "Critical", date: "11 Nov 2026" },
-  { id: "PHM-TK-003", name: "Produced Water Storage Tank", area: "Handil", department: "Surface Facility", thickness: "9.76 mm", pressure: "—", status: "Healthy", date: "10 Nov 2026" },
-  { id: "PHM-PL-012", name: "Tunu Gas Transmission", area: "Tunu", department: "Pipeline", thickness: "7.94 mm", pressure: "51.6 bar", status: "Monitoring", date: "08 Nov 2026" },
-];
+
 
 const navGroups = [
   { label: "WORKSPACE", items: [{ name: "Overview", icon: LayoutDashboard }, { name: "Asset register", icon: Database }, { name: "Inspection records", icon: ShieldCheck }, { name: "Corrosion monitoring", icon: Waves }, { name: "Production data", icon: Gauge }] },
@@ -31,13 +25,74 @@ const navGroups = [
 
 export default function Home() {
   const [active, setActive] = useState("Overview");
+  const [assets, setAssets] = useState<Asset[]>([]);
+const [assetsLoading, setAssetsLoading] = useState(true);
+const [assetsError, setAssetsError] = useState("");
   const [query, setQuery] = useState("");
+  useEffect(() => {
+  async function fetchAssets() {
+    try {
+      const response = await fetch("/api/assets");
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch assets");
+      }
+
+      const result = await response.json();
+
+      const formattedAssets: Asset[] = result.data.map((item: any) => ({
+        id: item.asset_id,
+        name: item.asset_name,
+        area: item.area ?? "—",
+        department: item.department ?? "—",
+
+        thickness:
+          item.latest_thickness != null
+            ? `${Number(item.latest_thickness).toFixed(2)} mm`
+            : "—",
+
+        pressure:
+          item.operating_pressure != null
+            ? `${Number(item.operating_pressure).toFixed(1)} bar`
+            : "—",
+
+        status: item.condition ?? "Unknown",
+
+        date: item.last_inspection_date
+          ? new Date(item.last_inspection_date).toLocaleDateString(
+              "en-GB",
+              { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" }
+            )
+          : "—",
+      }));
+
+      setAssets(formattedAssets);
+
+    } catch (error) {
+      console.error("Asset loading error:", error);
+      setAssetsError("Unable to load assets from Neon.");
+    } finally {
+      setAssetsLoading(false);
+    }
+  }
+
+  fetchAssets();
+}, []);
   const [department, setDepartment] = useState("All departments");
   const [period, setPeriod] = useState("Last 30 days");
   const [notice, setNotice] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const filtered = useMemo(() => assets.filter(a => (department === "All departments" || a.department === department) && (a.name.toLowerCase().includes(query.toLowerCase()) || a.id.toLowerCase().includes(query.toLowerCase()))), [department, query]);
-
+  const filtered = useMemo(
+  () =>
+    assets.filter(
+      (a) =>
+        (department === "All departments" ||
+          a.department === department) &&
+        (a.name.toLowerCase().includes(query.toLowerCase()) ||
+          a.id.toLowerCase().includes(query.toLowerCase()))
+    ),
+  [assets, department, query]
+);
   const [conditionFilter, setConditionFilter] = useState("All");
   const openCondition = (condition: string) => { setConditionFilter(condition); setActive("Asset condition"); };
 
@@ -93,7 +148,105 @@ export default function Home() {
             <section className="panel table-panel"><div className="panel-heading table-heading"><div><div className="panel-kicker">ASSET REGISTER</div><h2>Recently monitored assets</h2><p>Latest records across your inspection disciplines</p></div><button className="button button-outline" onClick={() => setActive("Asset register")}>View asset register <ExternalLink size={14}/></button></div><div className="table-toolbar"><div className="search-box"><Search size={15}/><input placeholder="Search asset name or ID..." value={query} onChange={e => setQuery(e.target.value)}/>{query && <button onClick={() => setQuery("")} aria-label="Clear search"><X size={14}/></button>}</div><button className="toolbar-filter" onClick={() => notify("Use the department filter above to narrow this table.")}><SlidersHorizontal size={15}/> Filters</button><span className="result-count">{filtered.length} assets</span></div><div className="table-scroll"><table><thead><tr><th>ASSET / PIPELINE</th><th>AREA</th><th>DISCIPLINE</th><th>WALL THICKNESS</th><th>OPERATING PRESSURE</th><th>CONDITION</th><th>LAST INSPECTION</th><th/></tr></thead><tbody>{filtered.map(asset=><tr key={asset.id}><td><div className="asset-name">{asset.name}</div><div className="asset-id">{asset.id}</div></td><td>{asset.area}</td><td><span className="discipline-tag">{asset.department}</span></td><td className="numeric">{asset.thickness}</td><td className="numeric">{asset.pressure}</td><td><Status status={asset.status}/></td><td className="date-cell">{asset.date}</td><td><button className="row-more" onClick={() => notify(`Opening asset ${asset.id} — detail view is coming soon.`)} aria-label={`Open ${asset.id}`}><MoreHorizontal size={17}/></button></td></tr>)}</tbody></table>{filtered.length === 0 && <div className="empty-state">No assets match your search.</div>}</div><div className="table-footer"><span>Showing <strong>{filtered.length}</strong> of 1,284 registered assets <span className="demo-note">· Sample interface data</span></span><div className="pagination"><button disabled><ChevronLeft size={15}/></button><button className="current-page">1</button><button onClick={() => notify("Pagination will be connected to live data later.")}>2</button><button onClick={() => notify("Pagination will be connected to live data later.")}>3</button><span>…</span><button onClick={() => notify("Pagination will be connected to live data later.")}>→</button></div></div></section>
 
             <div className="bottom-grid"><section className="panel source-panel"><div className="panel-heading"><div><div className="panel-kicker">CONNECTED SOURCES</div><h2>Data source status</h2><p>Integration health by source system</p></div><span className="source-count">4 SOURCES</span></div><div className="source-list"><Source icon={<Database size={17}/>} name="SAP" detail="Surface facility inspection" status="Connected" tone="green"/><Source icon={<Waves size={17}/>} name="Pipeline database" detail="Pipeline inspection records" status="Connected" tone="green"/><Source icon={<FileSpreadsheet size={17}/>} name="Excel workbooks" detail="Corrosion monitoring" status="Manual import" tone="amber"/><Source icon={<Gauge size={17}/>} name="Direct Viewer" detail="Production parameters" status="Pending" tone="slate"/></div></section><section className="panel attention-panel"><div className="panel-heading"><div><div className="panel-kicker">NEEDS REVIEW</div><h2>Priority follow-ups</h2><p>Items that may require your attention</p></div><span className="attention-number">03</span></div><div className="followup-list"><Followup color="red" title="Critical wall thickness reading" detail="Attaka Offshore Flowline · PHM-PL-008" time="2 hours ago"/><Followup color="amber" title="Inspection record awaiting review" detail="Handil Export Line · PHM-PL-001" time="Yesterday"/><Followup color="blue" title="Production data not synchronized" detail="Direct Viewer · 4 assets affected" time="12 Nov 2026"/></div></section></div>
-          </> : active === "Production data" ? <ProductionView department={department} period={period} notify={notify}/>
+          </> : active === "Asset register" ? (
+  <section className="panel table-panel">
+
+    <div className="panel-heading table-heading">
+      <div>
+        <div className="panel-kicker">DATABASE / ASSET REGISTER</div>
+        <h2>All registered assets</h2>
+        <p>Assets retrieved directly from the Neon database</p>
+      </div>
+
+      <span className="source-count">
+        {assets.length} TOTAL ASSETS
+      </span>
+    </div>
+
+    <div className="table-toolbar">
+      <div className="search-box">
+        <Search size={15} />
+
+        <input
+          placeholder="Search asset name or ID..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+      </div>
+
+      <span className="result-count">
+        {filtered.length} assets found
+      </span>
+    </div>
+
+    <div className="table-scroll">
+
+      {assetsLoading ? (
+        <div className="empty-state">Loading assets...</div>
+
+      ) : assetsError ? (
+        <div className="empty-state">{assetsError}</div>
+
+      ) : (
+        <table>
+          <thead>
+            <tr>
+              <th>ASSET / PIPELINE</th>
+              <th>AREA</th>
+              <th>DISCIPLINE</th>
+              <th>WALL THICKNESS</th>
+              <th>OPERATING PRESSURE</th>
+              <th>CONDITION</th>
+              <th>LAST INSPECTION</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {filtered.map((asset) => (
+              <tr key={asset.id}>
+                <td>
+                  <div className="asset-name">{asset.name}</div>
+                  <div className="asset-id">{asset.id}</div>
+                </td>
+
+                <td>{asset.area}</td>
+
+                <td>
+                  <span className="discipline-tag">
+                    {asset.department}
+                  </span>
+                </td>
+
+                <td className="numeric">{asset.thickness}</td>
+
+                <td className="numeric">{asset.pressure}</td>
+
+                <td>
+                  <Status status={asset.status} />
+                </td>
+
+                <td className="date-cell">{asset.date}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      {!assetsLoading && !assetsError && filtered.length === 0 && (
+        <div className="empty-state">No assets found.</div>
+      )}
+
+    </div>
+
+    <div className="table-footer">
+      <span>
+        Showing <strong>{filtered.length}</strong> of{" "}
+        <strong>{assets.length}</strong> database records
+      </span>
+    </div>
+
+  </section>
+) : active === "Production data" ? <ProductionView department={department} period={period} notify={notify}/>
           : active === "Inspection records" ? (department === "Pipeline" ? <InspectionImport knownAssetIds={ASSETS.map(a => a.id)} onImported={n => notify(`${n} pipeline inspection records imported (demo, not saved).`)}/> : <InspectionView department={department} period={period} notify={notify}/>)          : active === "Corrosion monitoring" ? <MonitoringView department={department} notify={notify}/>
           : active === "Asset condition" ? <AssetConditionView department={department} period={period} notify={notify} initialCondition={conditionFilter} onBack={() => setActive("Overview")}/>
           : <section className="panel placeholder-panel"><div className="placeholder-icon"><Command size={25}/></div><div className="panel-kicker">{active.toUpperCase()}</div><h2>{active} workspace</h2><p>This section is part of the frontend prototype. The dashboard currently uses illustrative sample data; workflows and backend integrations will be developed in later iterations.</p><button className="button button-primary" onClick={() => setActive("Overview")}>Back to overview</button></section>}
