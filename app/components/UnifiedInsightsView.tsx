@@ -47,6 +47,10 @@ export default function UnifiedInsightsView({ department, notify }: { department
   const assetProduction=useMemo(()=>production.filter(r=>r.assetId===selectedAsset?.asset_id&&(!from||r.date>=from)&&(!to||r.date<=to)).sort((a,b)=>a.date.localeCompare(b.date)),[production,selectedAsset,from,to]);
   const thicknessTrend=useMemo(()=>{const byDate=new Map<string,number[]>();for(const r of assetInspections){const values=byDate.get(r.date)??[];values.push(Number(r.measuredMm));byDate.set(r.date,values);}return Array.from(byDate,([date,values])=>({date,value:Math.min(...values)})).sort((a,b)=>a.date.localeCompare(b.date));},[assetInspections]);
   const pressureTrend=useMemo(()=>assetProduction.map(r=>({date:r.date,value:Number(r.pressure)})),[assetProduction]);
+  // Keep each chart on a shared scale across assets so selecting another asset
+  // changes the line's vertical position instead of rescaling every trend.
+  const thicknessAxisMax=Math.max(5,Math.ceil(Math.max(0,...inspections.flatMap(r=>[Number(r.nominalMm),Number(r.measuredMm)]),...assets.map(a=>Number(a.nominal_thickness??0)))/5)*5);
+  const pressureAxisMax=Math.max(10,Math.ceil(Math.max(0,...production.map(r=>Number(r.pressure)))/10)*10);
   const alerts=useMemo(()=>assets.map(a=>{
     const nominal=Number(a.nominal_thickness??0), measured=Number(a.latest_thickness??0);
     const loss=nominal>0&&measured>0?(nominal-measured)/nominal*100:0;
@@ -105,7 +109,7 @@ export default function UnifiedInsightsView({ department, notify }: { department
         <div><div className="panel-kicker">PRODUCTION CONTEXT</div><div className="table-scroll"><table><thead><tr><th>DATE</th><th>PRESSURE</th><th>TEMP.</th><th>GAS</th><th>WATER</th><th>OIL</th></tr></thead><tbody>{assetProduction.slice(0,12).map((r,i)=><tr key={r.date+"-"+i}><td>{dateLabel(r.date)}</td><td>{Number(r.pressure).toFixed(1)} bar</td><td>{Number(r.temperature).toFixed(1)} °C</td><td>{Number(r.gas).toFixed(2)}</td><td>{Number(r.water).toFixed(0)}</td><td>{Number(r.oil).toFixed(0)}</td></tr>)}</tbody></table>{assetProduction.length===0&&<div className="empty-state">No production readings in this date range.</div>}</div></div>
       </div>
  
-      <div className="detail-grid" style={{marginTop:18}}><div className="sub-panel"><h3>Wall thickness trend</h3><p>Lowest measured thickness per inspection date; nominal reference is shown above</p><LineChart points={thicknessTrend} unit="mm" digits={2}/></div><div className="sub-panel"><h3>Operating pressure trend</h3><p>Pressure readings for the selected asset</p><LineChart points={pressureTrend} unit="bar" digits={1}/></div></div>
+      <div className="detail-grid" style={{marginTop:18}}><div className="sub-panel"><h3>Wall thickness trend</h3><p>Lowest measured thickness per inspection date; nominal reference is shown above</p><LineChart points={thicknessTrend} unit="mm" digits={2} min={0} max={thicknessAxisMax}/></div><div className="sub-panel"><h3>Operating pressure trend</h3><p>Pressure readings for the selected asset</p><LineChart points={pressureTrend} unit="bar" digits={1} min={0} max={pressureAxisMax}/></div></div>
    </section>}
 
     <section className="panel" style={{padding:22}}>
