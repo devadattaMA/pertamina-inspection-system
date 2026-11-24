@@ -1,5 +1,5 @@
 /** The prototype's fixed "today" (matches the date shown in the top bar). */
-export const APP_TODAY = "2026-11-13";
+export const APP_TODAY = "2026-11-24";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
