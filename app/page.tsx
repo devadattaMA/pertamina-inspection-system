@@ -14,6 +14,8 @@ import AssetConditionView from "./components/AssetConditionView";
 import InspectionImport from "./components/InspectionImport";
 import { ASSETS } from "./lib/assets";
 import MonitoringView from "./components/MonitoringView";
+import { useRouter } from "next/navigation";
+import { hasPermission } from "./lib/permissions";
 
 type Asset = { id: string; name: string; area: string; department: string; thickness: string; pressure: string; status: string; date: string; };
 
@@ -25,6 +27,9 @@ const navGroups = [
 
 export default function Home() {
   const [active, setActive] = useState("Overview");
+  const router = useRouter();
+  const [currentUser, setCurrentUser] = useState<{id:string;name:string;email:string;role:"admin"|"inspector"|"viewer";mustChangePassword:boolean}|null>(null);
+  useEffect(() => { fetch("/api/auth/me",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(p=>{if(p?.success)setCurrentUser(p.user);}).catch(()=>setCurrentUser(null)); }, []);
   const [assets, setAssets] = useState<Asset[]>([]);
 const [assetsLoading, setAssetsLoading] = useState(true);
 const [assetsError, setAssetsError] = useState("");
@@ -98,6 +103,7 @@ const [assetsError, setAssetsError] = useState("");
 
   const notify = (message: string) => { setNotice(message); window.setTimeout(() => setNotice(""), 2800); };
   const title = active === "Overview" ? "Overview" : active;
+  const canWrite = currentUser ? hasPermission(currentUser.role, "write_inspections") : false;
   return (
     <main className="app-shell">
       <aside className={`sidebar ${sidebarOpen ? "sidebar-open" : ""}`}>
@@ -109,23 +115,24 @@ const [assetsError, setAssetsError] = useState("");
         <div className="workspace-switch"><div className="workspace-avatar">P</div><div className="workspace-copy"><strong>Pertamina Hulu Mahakam</strong><span>Inspection workspace</span></div><ChevronDown size={15}/></div>
         <div className="nav-scroll">
           {navGroups.map(group => <div className="nav-group" key={group.label}><div className="nav-label">{group.label}</div>{group.items.map(item => <button key={item.name} className={`nav-item ${active === item.name ? "active" : ""}`} onClick={() => { setActive(item.name); setSidebarOpen(false); }}><item.icon size={17}/><span>{item.name}</span>{item.name === "Data integration" && <span className="nav-dot"/>}</button>)}</div>)}
+          {currentUser && hasPermission(currentUser.role, "manage_users") && <button className="nav-item" onClick={() => router.push("/admin/users")}><ShieldCheck size={17}/><span>User management</span></button>}
         </div>
         <div className="sidebar-bottom">
           <div className="system-status"><span className="status-pulse"/><div><strong>System operational</strong><small>All services running</small></div><ChevronRight size={14}/></div>
           <button className="nav-item"><Settings2 size={17}/><span>Settings</span></button>
           <button className="nav-item"><CircleHelp size={17}/><span>Help & support</span></button>
-          <div className="profile"><div className="profile-avatar">GT</div><div className="profile-copy"><strong>Gerard Tarigan</strong><span>Inspection planning</span></div><MoreHorizontal size={18}/></div>
+          <div className="profile"><div className="profile-avatar">{currentUser?.name?.slice(0,2).toUpperCase() ?? "PH"}</div><div className="profile-copy"><strong>{currentUser?.name ?? "Signed in user"}</strong><span>{currentUser?.role ?? "Loading account"}</span></div><button className="icon-button" aria-label="Log out" onClick={async()=>{try{await fetch("/api/auth/logout",{method:"POST"});}finally{router.replace("/login");router.refresh();}}}><X size={16}/></button></div>
         </div>
       </aside>
 
       <section className="main-area">
         <header className="topbar">
           <div className="topbar-left"><button className="icon-button menu-toggle" onClick={() => setSidebarOpen(true)} aria-label="Open menu"><Menu size={19}/></button><div className="breadcrumb">Workspace <ChevronRight size={13}/> <strong>{title}</strong></div></div>
-          <div className="topbar-right"><div className="topbar-date"><CalendarDays size={15}/> Friday, 13 November 2026</div><button className="icon-button notification" onClick={() => notify("You're all caught up. No new notifications.")} aria-label="Notifications"><Bell size={18}/><i/></button><div className="top-avatar">GT</div></div>
+          <div className="topbar-right"><div className="topbar-date"><CalendarDays size={15}/> Friday, 13 November 2026</div><button className="icon-button notification" onClick={() => notify("You're all caught up. No new notifications.")} aria-label="Notifications"><Bell size={18}/><i/></button><div className="top-avatar">{currentUser?.name?.slice(0,2).toUpperCase() ?? "PH"}</div></div>
         </header>
 
         <div className="page-content">
-          <div className="welcome-row"><div><div className="eyebrow"><span className="eyebrow-line"/> ASSET INTEGRITY / COMMAND CENTER</div><h1>{title === "Overview" ? <>Good afternoon, Gerard<span className="wave">.</span></> : title}</h1><p className="page-subtitle">{active === "Overview" ? "A consolidated view of asset health, inspection activity, and operating conditions." : `Explore and manage ${active.toLowerCase()} across the inspection workspace.`}</p></div><div className="welcome-actions"><button className="button button-quiet" onClick={() => notify("Report export is a frontend demo for now.")}><Download size={16}/> Export report</button><button className="button button-primary" onClick={() => notify("New record flow will be connected to the backend later.")}><Plus size={17}/> New record</button></div></div>
+          <div className="welcome-row"><div><div className="eyebrow"><span className="eyebrow-line"/> ASSET INTEGRITY / COMMAND CENTER</div><h1>{title === "Overview" ? <>Good afternoon, {currentUser?.name ?? "there"}<span className="wave">.</span></> : title}</h1><p className="page-subtitle">{active === "Overview" ? "A consolidated view of asset health, inspection activity, and operating conditions." : `Explore and manage ${active.toLowerCase()} across the inspection workspace.`}</p></div><div className="welcome-actions"><button className="button button-quiet" onClick={() => notify("Report export is a frontend demo for now.")}><Download size={16}/> Export report</button>{canWrite && <button className="button button-primary" onClick={() => notify("New record flow will be connected in a later phase.")}><Plus size={17}/> New record</button>}</div></div>
 
           <div className="filter-row"><div className="filter-context"><span className="live-indicator"/> LIVE WORKSPACE SNAPSHOT <span className="filter-separator">/</span> <span>Updated just now</span></div><div className="filters"><label className="select-wrap"><Filter size={14}/><select value={department} onChange={e => setDepartment(e.target.value)}><option>All departments</option><option>Pipeline</option><option>Surface Facility</option></select><ChevronDown size={13}/></label><label className="select-wrap"><CalendarDays size={14}/><select value={period} onChange={e => setPeriod(e.target.value)}><option>Last 30 days</option><option>Last 7 days</option><option>Last 90 days</option></select><ChevronDown size={13}/></label></div></div>
 
