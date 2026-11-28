@@ -1,8 +1,8 @@
 import { neon } from "@neondatabase/serverless";
 import { NextResponse } from "next/server";
-import { getDatabaseUrl } from "../../../../lib/env";
-import { clearSessionCookie, getSignedSession } from "../../../../lib/auth";
-import { hashSessionToken } from "../../../../lib/auth-security";
+import { getDatabaseUrl } from "../../../lib/env";
+import { clearSessionCookie, getSignedSession } from "../../../lib/auth";
+import { hashSessionToken } from "../../../lib/auth-security";
 
 export const dynamic = "force-dynamic";
 export async function POST(request: Request) {
