@@ -1,7 +1,6 @@
 import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
-import { join } from "node:path";
 import { Pool } from "@neondatabase/serverless";
 
 if (existsSync(".env.local")) process.loadEnvFile(".env.local");
