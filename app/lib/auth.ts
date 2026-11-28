@@ -1,8 +1,8 @@
 import { neon } from "@neondatabase/serverless";
-import { NextResponse } from "next/server";
-import { getAuthSecret, getDatabaseUrl } from "./env";
-import { AUTH_COOKIE_NAME, createSignedSessionCookie, hashSessionToken, readCookie, verifySessionCookie } from "./auth-security";
-import { rolesForPermission, type Permission, type Role } from "./permissions";
+import { NextResponse } from "next/server.js";
+import { getAuthSecret, getDatabaseUrl } from "./env.ts";
+import { AUTH_COOKIE_NAME, createSignedSessionCookie, hashSessionToken, readCookie, verifySessionCookie } from "./auth-security.ts";
+import { rolesForPermission, type Permission, type Role } from "./permissions.ts";
 
 export type AuthenticatedUser = { id:string; name:string; email:string; role:Role; mustChangePassword:boolean };
 export type AuthorizationResult = { authorized:true; user:AuthenticatedUser } | { authorized:false; response:NextResponse };
