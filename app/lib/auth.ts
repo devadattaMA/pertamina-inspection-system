@@ -46,6 +46,10 @@ export async function requireRole(request:Request,allowedRoles:readonly Role[],a
     return {authorized:false,response:NextResponse.json({success:false,message:"Unable to verify the session."},{status:503})};
   }
 }
-export async function requirePermission(request:Request,permission:Permission):Promise<AuthorizationResult> {
-  return requireRole(request,rolesForPermission(permission));
+export async function requirePermission(
+  request: Request,
+  permission: Permission,
+  authenticate: (request: Request) => Promise<AuthenticatedUser | null> = getAuthenticatedUser,
+): Promise<AuthorizationResult> {
+  return requireRole(request, rolesForPermission(permission), authenticate);
 }
