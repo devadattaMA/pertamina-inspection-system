@@ -8,7 +8,7 @@ import {
   ChevronLeft, ChevronRight, CircleHelp, Clock3, Command, Download, FileSpreadsheet,
   Filter, Gauge, LayoutDashboard, LifeBuoy, Menu, MoreHorizontal, Plus, Search,
   Settings2, ShieldCheck, SlidersHorizontal, Waves, Wrench, X, Database, CalendarDays,
-  CheckCircle2, CircleDot, ArrowUpRight as ExternalLink, Layers3, PanelLeftClose
+  CheckCircle2, CircleDot, ArrowUpRight as ExternalLink, Layers3, PanelLeftClose, LogOut
 } from "lucide-react";
 import ProductionView from "./components/ProductionView";
 import InspectionView from "./components/InspectionView";
@@ -141,7 +141,7 @@ const [assetsError, setAssetsError] = useState("");
           <div className="system-status"><span className="status-pulse"/><div><strong>System operational</strong><small>All services running</small></div><ChevronRight size={14}/></div>
           <button className="nav-item"><Settings2 size={17}/><span>Settings</span></button>
           <button className="nav-item"><CircleHelp size={17}/><span>Help & support</span></button>
-          <div className="profile"><div className="profile-avatar">{currentUser?.name?.slice(0, 2).toUpperCase() ?? "PH"}</div><div className="profile-copy"><strong>{currentUser?.name ?? "Signed in user"}</strong><span>{currentUser?.role ?? "Loading account"}</span></div><button className="icon-button" aria-label="Log out" onClick={async () => { try { await fetch("/api/auth/logout", { method: "POST" }); } finally { router.replace("/login"); router.refresh(); } }}><X size={16}/></button></div>
+          <div className="profile"><div className="profile-avatar">{currentUser?.name?.slice(0, 2).toUpperCase() ?? "PH"}</div><div className="profile-copy"><strong>{currentUser?.name ?? "Signed in user"}</strong><span>{currentUser?.role ?? "Loading account"}</span></div><button className="profile-logout" onClick={async () => { try { await fetch("/api/auth/logout", { method: "POST" }); } finally { router.replace("/login"); router.refresh(); } }}><LogOut size={15}/><span>Log out</span></button></div>
         </div>
       </aside>
 
