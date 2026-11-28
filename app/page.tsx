@@ -3,10 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Activity, AlertTriangle, ArrowDownRight, ArrowUpRight, Bell, ChevronDown,
-  ChevronLeft, ChevronRight, CircleHelp, Clock3, Command, Download, FileSpreadsheet,
-  Filter, Gauge, LayoutDashboard, LifeBuoy, Menu, MoreHorizontal, Plus, Search,
+  ChevronLeft, ChevronRight, CircleHelp, Command, Download, FileSpreadsheet,
+  Filter, Gauge, LayoutDashboard, Menu, MoreHorizontal, Plus, Search,
   Settings2, ShieldCheck, SlidersHorizontal, Waves, Wrench, X, Database, CalendarDays,
-  CheckCircle2, CircleDot, ArrowUpRight as ExternalLink, Layers3, PanelLeftClose
+  CheckCircle2, ArrowUpRight as ExternalLink, Layers3
 } from "lucide-react";
 import ProductionView from "./components/ProductionView";
 import InspectionView from "./components/InspectionView";
