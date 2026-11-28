@@ -7,16 +7,18 @@ type Point = { date: string; value: number };
 
 const W = 720, H = 240, PAD = { l: 52, r: 16, t: 16, b: 28 };
 
-export default function LineChart({ points, unit, digits }: { points: Point[]; unit: string; digits: number }) {
+export default function LineChart({ points, unit, digits, min: fixedMin, max: fixedMax }: { points: Point[]; unit: string; digits: number; min?: number; max?: number }) {
   const gradId = `grad-${useId().replace(/:/g, "")}`;
   const [hover, setHover] = useState<number | null>(null);
 
   if (points.length < 2) return <div className="empty-state">Not enough data in this period to draw a trend.</div>;
 
   const values = points.map(p => p.value);
-  let min = Math.min(...values), max = Math.max(...values);
-  const span = max - min || Math.abs(max) * 0.1 || 1;
-  min -= span * 0.12; max += span * 0.12;
+  let min = fixedMin ?? Math.min(...values), max = fixedMax ?? Math.max(...values);
+  if (fixedMin === undefined || fixedMax === undefined) {
+    const span = max - min || Math.abs(max) * 0.1 || 1;
+    min -= span * 0.12; max += span * 0.12;
+  }
   const pw = W - PAD.l - PAD.r, ph = H - PAD.t - PAD.b;
   const x = (i: number) => PAD.l + (i / (points.length - 1)) * pw;
   const y = (v: number) => PAD.t + (1 - (v - min) / (max - min)) * ph;

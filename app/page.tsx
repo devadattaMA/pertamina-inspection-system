@@ -1,33 +1,21 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { hasPermission } from "./lib/permissions";
 import {
   Activity, AlertTriangle, ArrowDownRight, ArrowUpRight, Bell, ChevronDown,
-  ChevronLeft, ChevronRight, CircleHelp, Command, Download, FileSpreadsheet,
-  Filter, Gauge, LayoutDashboard, Menu, MoreHorizontal, Plus, Search,
+  ChevronLeft, ChevronRight, CircleHelp, Clock3, Command, Download, FileSpreadsheet,
+  Filter, Gauge, LayoutDashboard, LifeBuoy, Menu, MoreHorizontal, Plus, Search,
   Settings2, ShieldCheck, SlidersHorizontal, Waves, Wrench, X, Database, CalendarDays,
-  CheckCircle2, ArrowUpRight as ExternalLink, Layers3
+  CheckCircle2, CircleDot, ArrowUpRight as ExternalLink, Layers3, PanelLeftClose
 } from "lucide-react";
 import ProductionView from "./components/ProductionView";
 import InspectionView from "./components/InspectionView";
 import AssetConditionView from "./components/AssetConditionView";
 import InspectionImport from "./components/InspectionImport";
-import { ASSETS } from "./lib/assets";
 import MonitoringView from "./components/MonitoringView";
-import { useRouter } from "next/navigation";
-import { hasPermission } from "./lib/permissions";
-
-type AssetApiRecord = {
-  asset_id: string;
-  asset_name: string;
-  area: string | null;
-  department: string | null;
-  latest_thickness: number | string | null;
-  operating_pressure: number | string | null;
-  condition: string | null;
-  last_inspection_date: string | null;
-};
-type AssetApiResponse = { success: boolean; data?: AssetApiRecord[]; message?: string };
+import UnifiedInsightsView from "./components/UnifiedInsightsView";
 
 type Asset = { id: string; name: string; area: string; department: string; thickness: string; pressure: string; status: string; date: string; };
 
@@ -40,8 +28,13 @@ const navGroups = [
 export default function Home() {
   const [active, setActive] = useState("Overview");
   const router = useRouter();
-  const [currentUser, setCurrentUser] = useState<{id:string;name:string;email:string;role:"admin"|"inspector"|"viewer";mustChangePassword:boolean}|null>(null);
-  useEffect(() => { fetch("/api/auth/me",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(p=>{if(p?.success)setCurrentUser(p.user);}).catch(()=>setCurrentUser(null)); }, []);
+  const [currentUser, setCurrentUser] = useState<{ id: string; name: string; email: string; role: "admin" | "inspector" | "viewer"; mustChangePassword: boolean } | null>(null);
+  useEffect(() => {
+    fetch("/api/auth/me", { cache: "no-store" })
+      .then(response => response.ok ? response.json() : null)
+      .then(payload => { if (payload?.success) setCurrentUser(payload.user); })
+      .catch(() => setCurrentUser(null));
+  }, []);
   const [assets, setAssets] = useState<Asset[]>([]);
 const [assetsLoading, setAssetsLoading] = useState(true);
 const [assetsError, setAssetsError] = useState("");
@@ -55,12 +48,12 @@ const [assetsError, setAssetsError] = useState("");
         throw new Error("Failed to fetch assets");
       }
 
-      const result: AssetApiResponse = await response.json();
+      const result = await response.json();
       if (!result.success || !Array.isArray(result.data)) {
-        throw new Error(result.message ?? "The assets API returned an invalid response.");
+        throw new Error(result.message ?? "Invalid asset response");
       }
 
-      const formattedAssets: Asset[] = result.data.map((item) => ({
+      const formattedAssets: Asset[] = result.data.map((item: any) => ({
         id: item.asset_id,
         name: item.asset_name,
         area: item.area ?? "—",
@@ -136,14 +129,14 @@ const [assetsError, setAssetsError] = useState("");
           <div className="system-status"><span className="status-pulse"/><div><strong>System operational</strong><small>All services running</small></div><ChevronRight size={14}/></div>
           <button className="nav-item"><Settings2 size={17}/><span>Settings</span></button>
           <button className="nav-item"><CircleHelp size={17}/><span>Help & support</span></button>
-          <div className="profile"><div className="profile-avatar">{currentUser?.name?.slice(0,2).toUpperCase() ?? "PH"}</div><div className="profile-copy"><strong>{currentUser?.name ?? "Signed in user"}</strong><span>{currentUser?.role ?? "Loading account"}</span></div><button className="icon-button" aria-label="Log out" onClick={async()=>{try{await fetch("/api/auth/logout",{method:"POST"});}finally{router.replace("/login");router.refresh();}}}><X size={16}/></button></div>
+          <div className="profile"><div className="profile-avatar">{currentUser?.name?.slice(0, 2).toUpperCase() ?? "PH"}</div><div className="profile-copy"><strong>{currentUser?.name ?? "Signed in user"}</strong><span>{currentUser?.role ?? "Loading account"}</span></div><button className="icon-button" aria-label="Log out" onClick={async () => { try { await fetch("/api/auth/logout", { method: "POST" }); } finally { router.replace("/login"); router.refresh(); } }}><X size={16}/></button></div>
         </div>
       </aside>
 
       <section className="main-area">
         <header className="topbar">
           <div className="topbar-left"><button className="icon-button menu-toggle" onClick={() => setSidebarOpen(true)} aria-label="Open menu"><Menu size={19}/></button><div className="breadcrumb">Workspace <ChevronRight size={13}/> <strong>{title}</strong></div></div>
-          <div className="topbar-right"><div className="topbar-date"><CalendarDays size={15}/> Friday, 13 November 2026</div><button className="icon-button notification" onClick={() => notify("You're all caught up. No new notifications.")} aria-label="Notifications"><Bell size={18}/><i/></button><div className="top-avatar">{currentUser?.name?.slice(0,2).toUpperCase() ?? "PH"}</div></div>
+          <div className="topbar-right"><div className="topbar-date"><CalendarDays size={15}/> {new Date().toLocaleDateString("en-GB", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}</div><button className="icon-button notification" onClick={() => notify("You're all caught up. No new notifications.")} aria-label="Notifications"><Bell size={18}/><i/></button><div className="top-avatar">{currentUser?.name?.slice(0, 2).toUpperCase() ?? "PH"}</div></div>
         </header>
 
         <div className="page-content">
@@ -151,26 +144,7 @@ const [assetsError, setAssetsError] = useState("");
 
           <div className="filter-row"><div className="filter-context"><span className="live-indicator"/> LIVE WORKSPACE SNAPSHOT <span className="filter-separator">/</span> <span>Updated just now</span></div><div className="filters"><label className="select-wrap"><Filter size={14}/><select value={department} onChange={e => setDepartment(e.target.value)}><option>All departments</option><option>Pipeline</option><option>Surface Facility</option></select><ChevronDown size={13}/></label><label className="select-wrap"><CalendarDays size={14}/><select value={period} onChange={e => setPeriod(e.target.value)}><option>Last 30 days</option><option>Last 7 days</option><option>Last 90 days</option></select><ChevronDown size={13}/></label></div></div>
 
-          {active === "Overview" ? <>
-            <div className="metric-grid">
-              <Metric label="Registered assets" value="1,284" change="+12 this month" icon={<Database size={18}/>} tone="blue" trend="up"/>
-              <Metric label="Inspections completed" value="368" change="+8.4% vs last period" icon={<ShieldCheck size={18}/>} tone="green" trend="up"/>
-              <Metric label="Assets need attention" value="24" change="6 critical findings" icon={<AlertTriangle size={18}/>} tone="amber" trend="down"/>
-              <Metric label="Data coverage" value="92.6%" change="Across 4 disciplines" icon={<Activity size={18}/>} tone="violet" trend="up"/>
-            </div>
-
-            <div className="content-grid">
-              <section className="panel health-panel"><div className="panel-heading"><div><div className="panel-kicker">ASSET CONDITION</div><h2>Inspection health overview</h2><p>Current condition distribution across registered assets</p></div><button className="more-button" onClick={() => notify("Detailed analytics will be available in a later iteration.")}><MoreHorizontal size={19}/></button></div>
-                <div className="health-content"><div className="donut-wrap"><div className="donut"><div className="donut-center"><strong>1,284</strong><span>Total assets</span></div></div></div><div className="legend"><Legend color="green" label="Healthy" value="72%" count="924 assets" onOpen={openCondition}/><Legend color="amber" label="Monitoring" value="18%" count="231 assets" onOpen={openCondition}/><Legend color="red" label="Attention" value="8%" count="103 assets" onOpen={openCondition}/><Legend color="slate" label="Critical" value="2%" count="26 assets" onOpen={openCondition}/></div></div>
-                <div className="panel-foot"><span><span className="tiny-dot green-dot"/> Based on latest available inspection records</span><span className="panel-link" role="button" tabIndex={0} onClick={() => openCondition("All")} onKeyDown={e => { if (e.key === "Enter") openCondition("All"); }}>View details <ChevronRight size={13}/></span></div>
-              </section>
-              <section className="panel activity-panel"><div className="panel-heading"><div><div className="panel-kicker">INSPECTION ACTIVITY</div><h2>Inspection trends</h2><p>Completed inspections over the past 6 months</p></div><button className="select-compact" onClick={() => setPeriod(period === "Last 30 days" ? "Last 90 days" : "Last 30 days")}>{period === "Last 30 days" ? "6 months" : "90 days"} <ChevronDown size={13}/></button></div><div className="chart-area"><div className="chart-y"><span>120</span><span>80</span><span>40</span><span>0</span></div><div className="chart-main"><div className="chart-gridlines"><i/><i/><i/><i/></div><div className="bars">{[48,66,57,82,71,94].map((h,i)=><div className="bar-column" key={i}><div className="bar-pair"><i style={{height:`${h}%`}}/><i style={{height:`${Math.max(15,h-24)}%`}}/></div><span>{["Jun","Jul","Aug","Sep","Oct","Nov"][i]}</span></div>)}</div></div></div><div className="chart-legend"><span><i className="legend-bar primary-bar"/> Completed</span><span><i className="legend-bar secondary-bar"/> Planned</span></div></section>
-            </div>
-
-            <section className="panel table-panel"><div className="panel-heading table-heading"><div><div className="panel-kicker">ASSET REGISTER</div><h2>Recently monitored assets</h2><p>Latest records across your inspection disciplines</p></div><button className="button button-outline" onClick={() => setActive("Asset register")}>View asset register <ExternalLink size={14}/></button></div><div className="table-toolbar"><div className="search-box"><Search size={15}/><input placeholder="Search asset name or ID..." value={query} onChange={e => setQuery(e.target.value)}/>{query && <button onClick={() => setQuery("")} aria-label="Clear search"><X size={14}/></button>}</div><button className="toolbar-filter" onClick={() => notify("Use the department filter above to narrow this table.")}><SlidersHorizontal size={15}/> Filters</button><span className="result-count">{filtered.length} assets</span></div><div className="table-scroll"><table><thead><tr><th>ASSET / PIPELINE</th><th>AREA</th><th>DISCIPLINE</th><th>WALL THICKNESS</th><th>OPERATING PRESSURE</th><th>CONDITION</th><th>LAST INSPECTION</th><th/></tr></thead><tbody>{filtered.map(asset=><tr key={asset.id}><td><div className="asset-name">{asset.name}</div><div className="asset-id">{asset.id}</div></td><td>{asset.area}</td><td><span className="discipline-tag">{asset.department}</span></td><td className="numeric">{asset.thickness}</td><td className="numeric">{asset.pressure}</td><td><Status status={asset.status}/></td><td className="date-cell">{asset.date}</td><td><button className="row-more" onClick={() => notify(`Opening asset ${asset.id} — detail view is coming soon.`)} aria-label={`Open ${asset.id}`}><MoreHorizontal size={17}/></button></td></tr>)}</tbody></table>{filtered.length === 0 && <div className="empty-state">No assets match your search.</div>}</div><div className="table-footer"><span>Showing <strong>{filtered.length}</strong> of 1,284 registered assets <span className="demo-note">· Sample interface data</span></span><div className="pagination"><button disabled><ChevronLeft size={15}/></button><button className="current-page">1</button><button onClick={() => notify("Pagination will be connected to live data later.")}>2</button><button onClick={() => notify("Pagination will be connected to live data later.")}>3</button><span>…</span><button onClick={() => notify("Pagination will be connected to live data later.")}>→</button></div></div></section>
-
-            <div className="bottom-grid"><section className="panel source-panel"><div className="panel-heading"><div><div className="panel-kicker">CONNECTED SOURCES</div><h2>Data source status</h2><p>Integration health by source system</p></div><span className="source-count">4 SOURCES</span></div><div className="source-list"><Source icon={<Database size={17}/>} name="SAP" detail="Surface facility inspection" status="Connected" tone="green"/><Source icon={<Waves size={17}/>} name="Pipeline database" detail="Pipeline inspection records" status="Connected" tone="green"/><Source icon={<FileSpreadsheet size={17}/>} name="Excel workbooks" detail="Corrosion monitoring" status="Manual import" tone="amber"/><Source icon={<Gauge size={17}/>} name="Direct Viewer" detail="Production parameters" status="Pending" tone="slate"/></div></section><section className="panel attention-panel"><div className="panel-heading"><div><div className="panel-kicker">NEEDS REVIEW</div><h2>Priority follow-ups</h2><p>Items that may require your attention</p></div><span className="attention-number">03</span></div><div className="followup-list"><Followup color="red" title="Critical wall thickness reading" detail="Attaka Offshore Flowline · PHM-PL-008" time="2 hours ago"/><Followup color="amber" title="Inspection record awaiting review" detail="Handil Export Line · PHM-PL-001" time="Yesterday"/><Followup color="blue" title="Production data not synchronized" detail="Direct Viewer · 4 assets affected" time="12 Nov 2026"/></div></section></div>
-          </> : active === "Asset register" ? (
+          {active === "Overview" ? <UnifiedInsightsView department={department} notify={notify}/> : active === "Reports" ? <UnifiedInsightsView department={department} notify={notify}/> : active === "Asset register" ? (
   <section className="panel table-panel">
 
     <div className="panel-heading table-heading">
@@ -269,7 +243,7 @@ const [assetsError, setAssetsError] = useState("");
 
   </section>
 ) : active === "Production data" ? <ProductionView department={department} period={period} notify={notify}/>
-          : active === "Inspection records" ? (department === "Pipeline" ? <InspectionImport knownAssetIds={ASSETS.map(a => a.id)} onImported={n => notify(`${n} pipeline inspection records imported (demo, not saved).`)}/> : <InspectionView department={department} period={period} notify={notify}/>)          : active === "Corrosion monitoring" ? <MonitoringView department={department} notify={notify}/>
+          : active === "Inspection records" ? (department === "Pipeline" ? <InspectionImport knownAssetIds={assets.map(a => a.id)} onImported={n => notify(`${n} pipeline inspection records saved to Neon.`)}/> : <InspectionView department={department} period={period} notify={notify}/>)          : active === "Corrosion monitoring" ? <MonitoringView department={department} notify={notify}/>
           : active === "Asset condition" ? <AssetConditionView department={department} period={period} notify={notify} initialCondition={conditionFilter} onBack={() => setActive("Overview")}/>
           : <section className="panel placeholder-panel"><div className="placeholder-icon"><Command size={25}/></div><div className="panel-kicker">{active.toUpperCase()}</div><h2>{active} workspace</h2><p>This section is part of the frontend prototype. The dashboard currently uses illustrative sample data; workflows and backend integrations will be developed in later iterations.</p><button className="button button-primary" onClick={() => setActive("Overview")}>Back to overview</button></section>}
           <footer className="footer"><span>PHM INTELLIGENCE <span className="footer-sep">/</span> INTERNAL WORKSPACE</span><span>Frontend prototype · Sample data only</span><span>v0.1.0</span></footer>
