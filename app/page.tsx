@@ -17,6 +17,18 @@ import InspectionImport from "./components/InspectionImport";
 import MonitoringView from "./components/MonitoringView";
 import UnifiedInsightsView from "./components/UnifiedInsightsView";
 
+type AssetApiRecord = {
+  asset_id: string;
+  asset_name: string;
+  area: string | null;
+  department: string | null;
+  latest_thickness: number | string | null;
+  operating_pressure: number | string | null;
+  condition: string | null;
+  last_inspection_date: string | null;
+};
+type AssetApiResponse = { success: boolean; data?: AssetApiRecord[]; message?: string };
+
 type Asset = { id: string; name: string; area: string; department: string; thickness: string; pressure: string; status: string; date: string; };
 
 
@@ -48,12 +60,12 @@ const [assetsError, setAssetsError] = useState("");
         throw new Error("Failed to fetch assets");
       }
 
-      const result = await response.json();
+      const result: AssetApiResponse = await response.json();
       if (!result.success || !Array.isArray(result.data)) {
         throw new Error(result.message ?? "Invalid asset response");
       }
 
-      const formattedAssets: Asset[] = result.data.map((item: any) => ({
+      const formattedAssets: Asset[] = result.data.map((item) => ({
         id: item.asset_id,
         name: item.asset_name,
         area: item.area ?? "—",
