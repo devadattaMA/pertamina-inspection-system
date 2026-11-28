@@ -4,7 +4,9 @@ import { requirePermission } from "../../lib/auth";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: Request) {
+  const auth = await requirePermission(request, "view_system_health");
+  if (!auth.authorized) return auth.response;
   try {
     const result = await sql`
       SELECT
