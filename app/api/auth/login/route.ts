@@ -1,10 +1,10 @@
 import bcrypt from "bcryptjs";
 import { neon } from "@neondatabase/serverless";
 import { NextResponse } from "next/server";
-import { getAuthSecret, getDatabaseUrl } from "../../../../lib/env";
-import { createSessionToken, hashRateLimitKey, hashSessionToken, SESSION_TTL_SECONDS } from "../../../../lib/auth-security";
-import { setSessionCookie } from "../../../../lib/auth";
-import { parseLoginInput } from "../../../../lib/auth-validation";
+import { getAuthSecret, getDatabaseUrl } from "../../../lib/env";
+import { createSessionToken, hashRateLimitKey, hashSessionToken, SESSION_TTL_SECONDS } from "../../../lib/auth-security";
+import { setSessionCookie } from "../../../lib/auth";
+import { parseLoginInput } from "../../../lib/auth-validation";
 
 export const dynamic = "force-dynamic";
 const DUMMY_HASH = "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
