@@ -1,0 +1,1 @@
+// Runtime-only environment validation. No build-time validation is performed.

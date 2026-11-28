@@ -8,6 +8,21 @@ type Props = {
   onImported?: (count: number, records: CleanRecord[]) => void;
 };
 
+type PipelineInspectionApiRecord = {
+  assetId: string;
+  date: string;
+  method: string;
+  thicknessMm: number | string;
+  pressureBar: number | string | null;
+  inspector: string;
+  remarks?: string | null;
+};
+type PipelineInspectionApiResponse = {
+  success: boolean;
+  records?: PipelineInspectionApiRecord[];
+  message?: string;
+};
+
 const PILL: Record<RowStatus, { cls: string; label: string }> = {
   valid: { cls: "healthy", label: "Valid" },
   warning: { cls: "attention", label: "Warning" },
@@ -23,9 +38,9 @@ export default function InspectionImport({ knownAssetIds, onImported }: Props) {
 
   const refreshImported = async () => {
     const response = await fetch("/api/pipeline-inspections", { cache: "no-store" });
-    const payload = await response.json();
+    const payload: PipelineInspectionApiResponse = await response.json();
     if (!response.ok || !payload.success || !Array.isArray(payload.records)) throw new Error(payload.message ?? "Unable to load pipeline inspections from Neon.");
-    setImported(payload.records.map((r: any) => ({ assetId: r.assetId, inspectionDate: r.date, method: r.method, thicknessMm: Number(r.thicknessMm), pressureBar: r.pressureBar == null ? null : Number(r.pressureBar), inspector: r.inspector, remarks: r.remarks ?? "" })));
+    setImported(payload.records.map((record: PipelineInspectionApiRecord) => ({ assetId: record.assetId, inspectionDate: record.date, method: record.method, thicknessMm: Number(record.thicknessMm), pressureBar: record.pressureBar == null ? null : Number(record.pressureBar), inspector: record.inspector, remarks: record.remarks ?? "" })));
   };
 
   useEffect(() => { void refreshImported().catch(error => window.alert(error instanceof Error ? error.message : "Unable to load pipeline inspections.")); }, []);
