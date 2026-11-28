@@ -1,4 +1,4 @@
-import { isRole, type Role } from "./permissions";
+import { isRole, type Role } from "./permissions.ts";
 
 export function parseLoginInput(value: unknown): { email: string; password: string } | null {
   if (!value || typeof value !== "object") return null;
